@@ -1,4 +1,19 @@
 #!/bin/bash
+#
+# Copyright 2023 Alexander Rose. All Rights Reserved.
+#
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+#
+# http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+#
 
 # realpath to this file
 script_dir=$(realpath $(dirname ${0}))
@@ -71,24 +86,26 @@ download_and_extract() {
     find "$directory" -type f -name 'saved_model.pb' -delete
 }
 
-for model in "${models[@]}"; do
-    IFS=',' read -ra parts <<< "$model"
-    name="${parts[0]}"
-    weights="${parts[1]}"
-    config="${parts[2]}"
-    if [ "$model_name" = "all" ] || [ "$model_name" = "$name" ] ; then
-      directory="$tmp_dir/$name"
-      # Check if the directory already exists
-      if [ ! -d "$directory" ]; then
-          download_and_extract "$directory" "$weights"
-          if [ -n "$config" ]; then
-              download_and_extract "$directory" "$config"
-          fi
-      else
-          echo "Skipping download for $directory. Directory already exists."
+if [ ! -d $tmp_dir ] ; then
+  for model in "${models[@]}"; do
+      IFS=',' read -ra parts <<< "$model"
+      name="${parts[0]}"
+      weights="${parts[1]}"
+      config="${parts[2]}"
+      if [ "$model_name" = "all" ] || [ "$model_name" = "$name" ] ; then
+        directory="$tmp_dir/$name"
+        # Check if the directory already exists
+        if [ ! -d "$directory" ]; then
+            download_and_extract "$directory" "$weights"
+            if [ -n "$config" ]; then
+                download_and_extract "$directory" "$config"
+            fi
+        else
+            echo "Skipping download for $directory. Directory already exists."
+        fi
       fi
-    fi
-done
+  done
+fi
 
 # debug
 if [ -z $DEBUG ]; then progress=auto; else progress=plain; fi
