@@ -78,23 +78,25 @@ download_and_extract() {
 
 if [ ! -d $tmp_dir ] ; then
   for model in "${models[@]}"; do
-      IFS=',' read -ra parts <<< "$model"
-      name="${parts[0]}"
-      weights="${parts[1]}"
-      config="${parts[2]}"
-      if [ "$model_name" = "all" ] || [ "$model_name" = "$name" ] ; then
-        directory="$tmp_dir/$name"
-        # Check if the directory already exists
-        if [ ! -d "$directory" ]; then
-            download_and_extract "$directory" "$weights"
-            if [ -n "$config" ]; then
-                download_and_extract "$directory" "$config"
-            fi
-        else
-            echo "Skipping download for $directory. Directory already exists."
-        fi
+    IFS=',' read -ra parts <<< "$model"
+    name="${parts[0]}"
+    weights="${parts[1]}"
+    config="${parts[2]}"
+    if [ "$model_name" = "all" ] || [ "$model_name" = "$name" ] ; then
+      directory="$tmp_dir/$name"
+      # Check if the directory already exists
+      if [ ! -d "$directory" ]; then
+          download_and_extract "$directory" "$weights"
+          if [ -n "$config" ]; then
+              download_and_extract "$directory" "$config"
+          fi
+      else
+          echo "Skipping download for $directory. Directory already exists."
       fi
+    fi
   done
+else
+  echo "Skipping model download. Directory $tmp_dir already exists."
 fi
 
 # debug
