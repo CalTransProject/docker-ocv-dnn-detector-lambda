@@ -1,3 +1,8 @@
+#
+# Copyright 2023 Alexander Rose. All Rights Reserved.
+#
+# SPDX-License-Identifier: MIT-0.
+#
 FROM public.ecr.aws/lambda/python:3.10
 
 RUN yum update -y
