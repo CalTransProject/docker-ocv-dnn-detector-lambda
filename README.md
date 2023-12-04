@@ -10,7 +10,7 @@ and your own object detection model.
 
 ## scripts
 
-Two scripts are included, one for building the container image and another to upload this image to your own private (Amazon Elastic Container Registry)[https://aws.amazon.com/ecr/]
+Two scripts are included, one for building the container image and another to upload this image to your own private [Amazon Elastic Container Registry](https://aws.amazon.com/ecr/)
 
 ```shell
 bin/build
@@ -22,7 +22,7 @@ bin/build
 bin/push
 ```
 
-- Push the newly created image to (ECR)[https://aws.amazon.com/ecr/]
+- Push the newly created image to [ECR](https://aws.amazon.com/ecr/)
 
 ## customization
 
