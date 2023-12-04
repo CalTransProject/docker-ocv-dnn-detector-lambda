@@ -1,0 +1,97 @@
+#!/bin/bash
+
+# realpath to this file
+script_dir=$(realpath $(dirname ${0}))
+
+# path to root directory
+root_dir=$(dirname ${script_dir})
+
+# path to app directory
+app_dir="$root_dir"/app
+
+# The folder path to save models
+tmp_dir="$root_dir"/tmp
+
+# url of the app repository
+app_repo=https://github.com/rosealexander/ocv-dnn-lambda-handler.git
+
+# the name of the container to build
+image_name="ocv-dnn-detector-lambda"
+
+version=latest
+
+# Clone the lambda app repo
+echo "Cloning $app_repo to $app_dir."
+if [ ! -d $app_dir ] ; then
+  mkdir $app_dir && \
+  git clone $app_repo $app_dir
+else
+  echo "Skipping git clone for $app_repo. Directory already exists."
+fi
+
+# The folder to save models
+echo "Saving modules to: $tmp_dir"
+
+# Handle keyboard interrupt
+function cleanup() {
+  echo "Keyboard interrupt detected. Waiting for download to finish..."
+  wait
+  echo "Exiting..."
+  exit 1
+}
+
+# Trap keyboard interrupt signal
+trap cleanup SIGINT
+
+# The models and corresponding config URLs, organized as a comma-separated list by name, weights, config
+models=(
+    "yolov4-tiny,https://github.com/AlexeyAB/darknet/releases/download/yolov4/yolov4-tiny.weights,https://github.com/AlexeyAB/darknet/raw/master/cfg/yolov4-tiny.cfg"
+)
+
+# The model to build
+model_name=$(echo "${1-all}" | tr '[:upper:]' '[:lower:]')
+
+download_and_extract() {
+    directory=$1
+    url=$2
+    filename=$(basename "$url")
+
+    # Download the file
+    wget "$url" -P "$directory"
+
+    if [[ $filename == *.tar.gz || $filename == *.tgz ]]; then
+        tar -xvf "$directory/$filename" -C "$directory"
+        rm "$directory/$filename"
+    elif [[ $filename == *.zip ]]; then
+        unzip "$directory/$filename" -d "$directory"
+        rm "$directory/$filename"
+    fi
+
+    # Remove 'saved_model.pb' files
+    find "$directory" -type f -name 'saved_model.pb' -delete
+}
+
+for model in "${models[@]}"; do
+    IFS=',' read -ra parts <<< "$model"
+    name="${parts[0]}"
+    weights="${parts[1]}"
+    config="${parts[2]}"
+    if [ "$model_name" = "all" ] || [ "$model_name" = "$name" ] ; then
+      directory="$tmp_dir/$name"
+      # Check if the directory already exists
+      if [ ! -d "$directory" ]; then
+          download_and_extract "$directory" "$weights"
+          if [ -n "$config" ]; then
+              download_and_extract "$directory" "$config"
+          fi
+      else
+          echo "Skipping download for $directory. Directory already exists."
+      fi
+    fi
+done
+
+# debug
+if [ -z $DEBUG ]; then progress=auto; else progress=plain; fi
+
+# build amd64 image
+docker build --progress=$progress --platform=linux/amd64 -t "$image_name:$version" $root_dir

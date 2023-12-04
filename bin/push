@@ -1,0 +1,45 @@
+#!/bin/bash
+
+# the name of the current image
+image="ocv-dnn-detector-lambda"
+
+# the new name of the new image
+name="ocv-dnn-detector-lambda"
+
+# the new image tag
+tag="latest"
+
+# the aws account number
+aws_account=$(aws sts get-caller-identity --query Account --output text)
+if [ $? -ne 0 ]; then exit 255; fi
+
+# the aws current region
+aws_region=$(aws configure get region)
+
+# the image full name
+image_full_name="${aws_account}.dkr.ecr.${aws_region}.amazonaws.com/${name}:${tag}"
+
+# docker build, tag
+docker tag ${image} ${image_full_name}
+
+# check that ECR repo exists
+(
+  set -e
+  # shellcheck disable=SC2091
+  $(aws ecr describe-repositories --repository-names ${name} --region ${aws_region})
+)
+errorCode=$?
+if [ $errorCode -eq 255 ] ; then
+  echo "Creating repo ${name}"
+  aws ecr create-repository --repository-name ${name} > /dev/null
+fi
+
+# get ecr login password and pipe to docker login
+echo "Docker authenticate to Amazon ECR registry"
+aws ecr get-login-password --region ${aws_region} \
+| docker login --username AWS --password-stdin "${aws_account}.dkr.ecr.${aws_region}.amazonaws.com"
+
+# docker push to ecr
+docker push ${image_full_name}
+
+echo "${image_full_name}"
