@@ -104,3 +104,7 @@ if [ -z $DEBUG ]; then progress=auto; else progress=plain; fi
 
 # build amd64 image
 docker build --progress=$progress --platform=linux/amd64 -t "$image_name:$version" $root_dir
+
+## cleanup
+#rm -Rf $app_dir
+#rm -Rf $tmp_dir
