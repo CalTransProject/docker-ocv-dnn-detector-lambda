@@ -18,7 +18,7 @@ app_dir="$root_dir"/app
 tmp_dir="$root_dir"/tmp
 
 # url of the app repository
-app_repo=https://github.com/rosealexander/ocv-dnn-lambda-handler.git
+app_repo=https://github.com/rosealexander/ocv-dnn-detector-lambda-handler.git
 
 # the name of the container to build
 image_name="ocv-dnn-detector-lambda"
@@ -105,6 +105,6 @@ if [ -z $DEBUG ]; then progress=auto; else progress=plain; fi
 # build amd64 image
 docker build --progress=$progress --platform=linux/amd64 -t "$image_name:$version" $root_dir
 
-## cleanup
-#rm -Rf $app_dir
-#rm -Rf $tmp_dir
+# cleanup
+rm -Rf $app_dir
+rm -Rf $tmp_dir
